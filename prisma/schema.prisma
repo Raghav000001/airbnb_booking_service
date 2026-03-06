@@ -5,16 +5,26 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  }
+}
 
 model Booking {
-  id            Int           @id @default(autoincrement())
-  userId        Int
-  hotelId       Int
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  bookingAmount Int
-  status        BookingStatus
+  id               Int             @id @default(autoincrement())
+  userId           Int
+  hotelId          Int
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  bookingAmount    Int
+  status           BookingStatus   @default(PENDING)
+  idempotencykey   idempotencykey? @relation(fields: [idempotencyKeyId], references: [id])
+  idempotencyKeyId Int?            @unique
+}
+
+model idempotencykey {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  booking   Booking?
 }
 
 enum BookingStatus {
