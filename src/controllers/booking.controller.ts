@@ -27,7 +27,7 @@ export const confirmBookingController = async (req:Request,res:Response) => {
             bookingId:booking.id,
             bookingStatus:booking.status
         })
-    } catch (error) {
-        throw new internalServerError("error in booking controller")
+    } catch (error:any) {
+        throw new internalServerError(error.message)
     }
 }

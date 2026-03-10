@@ -1,7 +1,8 @@
 import type { CreateBookingDto } from "../dto/booking.dto.ts";
 import { generateIdempotencykey } from "../helpers/generate_idempotencykey.ts";
-import { confirmBookingStatus, createBooking, createIdemPotencyKey, finalizeIdempotencyKey, getIdemPotencyKey } from "../repositories/booking.repositories.ts";
+import { confirmBookingStatus, createBooking, createIdemPotencyKey, finalizeIdempotencyKey, getIdemPotencyKeyWithLock } from "../repositories/booking.repositories.ts";
 import { badRequest, notFound } from "../errors/app.errors.ts";
+import prisma_client from "../config/prisma_client.ts";
 
 
 //1. create booking service
@@ -28,9 +29,10 @@ import { badRequest, notFound } from "../errors/app.errors.ts";
     
 //2. finalize booking service
 //  getIdempotencykey data => if not throw error => if this data already finalized throw error =>  confirm booking => finalize idempotencykey => return the booking instance
-
+// check for potential issues with and improvement in this service
  export const confirmBookingService = async (idempotencyKey:string) => {
-    const idempotencyKeyData = await getIdemPotencyKey(idempotencyKey)
+    return prisma_client.$transaction(async(txn)=> {
+       const idempotencyKeyData = await getIdemPotencyKeyWithLock(txn,idempotencyKey)
     if(!idempotencyKeyData){
         throw new notFound("Idempotency key not found")
     }
@@ -38,7 +40,9 @@ import { badRequest, notFound } from "../errors/app.errors.ts";
         throw new badRequest("Idempotency key already finalized")
     }
     // here payment logic/method should be implemented which i'll implement later
-    const booking = await confirmBookingStatus(idempotencyKeyData.bookingId)
-    await finalizeIdempotencyKey(idempotencyKey)
+
+    const booking = await confirmBookingStatus(txn,idempotencyKeyData.bookingId)
+    await finalizeIdempotencyKey(txn,idempotencyKey)
     return booking
+    })
  }
