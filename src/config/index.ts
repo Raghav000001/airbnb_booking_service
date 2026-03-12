@@ -5,6 +5,8 @@ import dotenv from "dotenv"
 type Config = {
     // we can add more configuration options types here like database url, secret key for jwt etc
     PORT: number,
+    REDIS_URL: string,
+    lockTTL: number,
 }
 
 
@@ -16,6 +18,8 @@ loadConfig()
 
 export const serverConfig : Config = {
    PORT: Number(process.env.PORT) || 3000, 
+   REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
+   lockTTL: Number(process.env.LOCK_TTL) || 100000
 }
 
 
